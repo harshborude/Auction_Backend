@@ -17,10 +17,17 @@ func main() {
 	}
 
 	utils.InitJWT()
+	log.Println("JWT initialized")
 
 	db.ConnectDatabase()
+	log.Println("Database connected")
 
 	go services.StartAuctionWorker()
+	log.Println("Auction worker started")
+
+	services.InitHub()
+	go services.AuctionHub.Run()
+	log.Println("WebSocket hub started")
 
 	router := routes.SetupRouter()
 

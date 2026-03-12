@@ -144,5 +144,9 @@ func PlaceBid(db *gorm.DB, auctionID uint, userID uint, bidAmount int64) (*model
 		return nil, err
 	}
 
+	// Transaction successfully committed here
+
+	BroadcastBidUpdate(auctionID, bidAmount, userID)
+
 	return placedBid, nil
 }

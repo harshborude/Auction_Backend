@@ -1,6 +1,11 @@
 package routes
 
-import "github.com/gin-gonic/gin"
+import (
+	"backend/controllers"
+	"backend/middleware"
+
+	"github.com/gin-gonic/gin"
+)
 
 func SetupRouter() *gin.Engine {
 
@@ -12,7 +17,11 @@ func SetupRouter() *gin.Engine {
 		})
 	})
 
+	// WebSocket route
+	router.GET("/ws", middleware.AuthMiddleware(), controllers.ServeWS)
+
 	UserRoutes(router)
 	AdminRoutes(router)
+
 	return router
 }

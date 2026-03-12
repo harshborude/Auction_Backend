@@ -12,18 +12,30 @@ func AuthMiddleware() gin.HandlerFunc {
 
 	return func(c *gin.Context) {
 
+		tokenString := ""
+
+		// Try Authorization header first (normal API requests)
 		authHeader := c.GetHeader("Authorization")
 
-		if authHeader == "" {
+		if authHeader != "" {
+			parts := strings.Split(authHeader, " ")
+			if len(parts) == 2 && parts[0] == "Bearer" {
+				tokenString = parts[1]
+			}
+		}
+
+		// Fallback for WebSocket connections
+		if tokenString == "" {
+			tokenString = c.Query("token")
+		}
+
+		if tokenString == "" {
 			c.JSON(http.StatusUnauthorized, gin.H{
-				"error": "authorization header missing",
+				"error": "authorization token missing",
 			})
 			c.Abort()
 			return
 		}
-
-		// Expect: Bearer <token>
-		tokenString := strings.TrimPrefix(authHeader, "Bearer ")
 
 		claims, err := utils.ValidateAccessToken(tokenString)
 
