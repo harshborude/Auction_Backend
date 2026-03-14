@@ -2,12 +2,14 @@ package controllers
 
 import (
 	"backend/db"
+	"backend/models"
 	"backend/services"
 	"net/http"
 	"strconv"
 	"strings"
 
 	"github.com/gin-gonic/gin"
+	"gorm.io/gorm"
 )
 
 type PlaceBidRequest struct {
@@ -80,4 +82,38 @@ func PlaceBid(c *gin.Context) {
 		"message": "bid placed successfully",
 		"bid":     bid,
 	})
+}
+
+// GetBidHistory fetches all bids for a specific auction
+func GetBidHistory(c *gin.Context) {
+
+	auctionIDParam := c.Param("id")
+
+	auctionIDUint64, err := strconv.ParseUint(auctionIDParam, 10, 64)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"error": "invalid auction id",
+		})
+		return
+	}
+
+	auctionID := uint(auctionIDUint64)
+
+	var bids []models.Bid
+
+	if err := db.DB.
+		Preload("User", func(db *gorm.DB) *gorm.DB {
+			return db.Select("id, username")
+		}).
+		Where("auction_id = ?", auctionID).
+		Order("created_at desc").
+		Find(&bids).Error; err != nil {
+
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"error": "failed to fetch bid history",
+		})
+		return
+	}
+
+	c.JSON(http.StatusOK, bids)
 }

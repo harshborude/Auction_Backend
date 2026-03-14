@@ -13,16 +13,14 @@ import (
 
 // StartAuctionWorker begins the background polling process
 func StartAuctionWorker() {
-	ticker := time.NewTicker(5 * time.Second)
+	ticker := time.NewTicker(2 * time.Second)
 	defer ticker.Stop()
 
 	log.Println("Auction background worker started...")
 
-	for {
-		select {
-		case <-ticker.C:
-			processExpiredAuctions()
-		}
+	for range ticker.C {
+		processScheduledAuctions()
+		processExpiredAuctions()
 	}
 }
 
@@ -30,9 +28,11 @@ func processExpiredAuctions() {
 	var auctions []models.Auction
 
 	// Optimistic read: Find auctions that need to be closed (fetch IDs only for efficiency)
-	err := db.DB.Model(&models.Auction{}).
+	err := db.DB.
+		Model(&models.Auction{}).
 		Select("id").
 		Where("status = ? AND end_time <= ?", "ACTIVE", time.Now()).
+		Order("end_time ASC").
 		Limit(50).
 		Find(&auctions).Error
 
@@ -51,11 +51,39 @@ func processExpiredAuctions() {
 	}
 }
 
+func processScheduledAuctions() {
+	var auctions []models.Auction
+
+	err := db.DB.
+		Model(&models.Auction{}).
+		Select("id").
+		Where("status = ? AND start_time <= ?", "SCHEDULED", time.Now()).
+		Order("start_time ASC").
+		Limit(50).
+		Find(&auctions).Error
+
+	if err != nil {
+		log.Printf("Worker error fetching scheduled auctions: %v\n", err)
+		return
+	}
+
+	for _, auction := range auctions {
+		err := ActivateAuction(db.DB, auction.ID)
+		if err != nil {
+			log.Printf("Failed to activate auction %d: %v\n", auction.ID, err)
+		} else {
+			log.Printf("Activated auction %d\n", auction.ID)
+		}
+	}
+}
+
 // FinalizeAuction handles the transactional settlement of an ended auction
 func FinalizeAuction(db *gorm.DB, auctionID uint) error {
+	var winnerID *uint
+	var finalPrice int64
+	var wasActive bool
 
-	return db.Transaction(func(tx *gorm.DB) error {
-
+	err := db.Transaction(func(tx *gorm.DB) error {
 		var auction models.Auction
 
 		// Step 1: Lock auction row
@@ -64,7 +92,7 @@ func FinalizeAuction(db *gorm.DB, auctionID uint) error {
 			return err
 		}
 
-		// Step 2: Double-check status and time to prevent race conditions
+		// Step 2: Prevent double-closing
 		if auction.Status != "ACTIVE" {
 			return nil
 		}
@@ -73,34 +101,85 @@ func FinalizeAuction(db *gorm.DB, auctionID uint) error {
 			return nil
 		}
 
-		// Step 3: Settle with the winner (if one exists)
-		if auction.CurrentHighestBidderID != nil {
-			winnerID := *auction.CurrentHighestBidderID
-			winningAmount := auction.CurrentHighestBid
+		wasActive = true
 
-			// Deduct the reserved credits permanently
-			if err := DeductReservedCredits(tx, winnerID, winningAmount); err != nil {
+		// Step 3: Settle winner
+		if auction.CurrentHighestBidderID != nil {
+			// Pointer safety: create a local copy of the ID
+			tempID := *auction.CurrentHighestBidderID
+			winnerID = &tempID
+
+			finalPrice = auction.CurrentHighestBid
+
+			if err := DeductReservedCredits(tx, *winnerID, finalPrice); err != nil {
 				return fmt.Errorf("failed to deduct winning credits: %w", err)
 			}
 
-			// Record the win transaction for the audit trail
 			if err := tx.Create(&models.CreditTransaction{
-				UserID:    winnerID,
-				Amount:    winningAmount,
-				Type:      "AUCTION_WIN", // Or TxAuctionWin if constants are shared in services
+				UserID:    *winnerID,
+				Amount:    finalPrice,
+				Type:      "AUCTION_WIN",
 				Reference: fmt.Sprintf("auction_%d_won", auction.ID),
 			}).Error; err != nil {
 				return fmt.Errorf("failed to log win transaction: %w", err)
 			}
 		}
 
-		// Step 4: Mark auction as ENDED
-		auction.Status = "ENDED"
-
-		if err := tx.Save(&auction).Error; err != nil {
+		// Step 4: Close auction using Update instead of Save
+		if err := tx.Model(&auction).Update("status", "ENDED").Error; err != nil {
 			return fmt.Errorf("failed to update auction status: %w", err)
 		}
 
 		return nil
 	})
+
+	if err != nil {
+		return err
+	}
+
+	// Broadcast only if we actually closed it
+	if wasActive {
+		BroadcastAuctionEnd(auctionID, winnerID, finalPrice)
+	}
+
+	return nil
+}
+
+func ActivateAuction(db *gorm.DB, auctionID uint) error {
+	var wasScheduled bool
+
+	err := db.Transaction(func(tx *gorm.DB) error {
+		var auction models.Auction
+
+		if err := tx.Clauses(clause.Locking{Strength: "UPDATE"}).
+			First(&auction, auctionID).Error; err != nil {
+			return err
+		}
+
+		if auction.Status != "SCHEDULED" {
+			return nil
+		}
+
+		if time.Now().Before(auction.StartTime) {
+			return nil
+		}
+
+		wasScheduled = true
+
+		if err := tx.Model(&auction).Update("status", "ACTIVE").Error; err != nil {
+			return err
+		}
+
+		return nil
+	})
+
+	if err != nil {
+		return err
+	}
+
+	if wasScheduled {
+		BroadcastAuctionStart(auctionID)
+	}
+
+	return nil
 }

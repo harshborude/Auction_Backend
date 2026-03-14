@@ -14,6 +14,7 @@ func AuctionRoutes(router *gin.Engine) {
     {
         auctions.GET("", controllers.GetAuctions)
         auctions.GET("/:id", controllers.GetAuctionByID)
+        auctions.GET("/:id/bids", controllers.GetBidHistory)
     }
 }
 

@@ -4,16 +4,19 @@ import (
 	"encoding/json"
 	"log"
 
+	"time"
+
 	"github.com/gorilla/websocket"
 )
 
 // Message defines the JSON protocol between client and server
 type Message struct {
-	Type      string `json:"type"` // e.g., JOIN_AUCTION, LEAVE_AUCTION, BID_UPDATE, AUCTION_END
-	AuctionID uint   `json:"auction_id"`
-	Amount    int64  `json:"amount,omitempty"`
-	BidderID  uint   `json:"bidder_id,omitempty"`
-	Message   string `json:"message,omitempty"`
+	Type      string    `json:"type"` // e.g., JOIN_AUCTION, LEAVE_AUCTION, BID_UPDATE, AUCTION_END
+	AuctionID uint      `json:"auction_id"`
+	Amount    int64     `json:"amount,omitempty"`
+	BidderID  uint      `json:"bidder_id,omitempty"`
+	Message   string    `json:"message,omitempty"`
+	EndTime   time.Time `json:"end_time,omitempty"` // Added to tell frontend the new clock time
 }
 
 // Client wraps the WebSocket connection and state
@@ -82,7 +85,7 @@ func (h *Hub) Run() {
 						}
 					}
 				}
-				
+
 				// 3. Clear the client's map to prevent reuse issues
 				client.Auctions = make(map[uint]bool)
 			}
@@ -116,7 +119,7 @@ func (h *Hub) Run() {
 			msgBytes, err := json.Marshal(message)
 			if err != nil {
 				log.Printf("Broadcast marshal error: %v", err)
-				continue 
+				continue
 			}
 
 			// Broadcast only to clients in the specific auction room

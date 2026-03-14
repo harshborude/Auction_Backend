@@ -6,6 +6,7 @@ import (
 
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
+	"gorm.io/gorm/logger"
 
 	"golang.org/x/crypto/bcrypt"
 
@@ -67,7 +68,9 @@ func ConnectDatabase() {
 		host, user, password, dbname, port,
 	)
 
-	database, err := gorm.Open(postgres.Open(dsn), &gorm.Config{})
+	database, err := gorm.Open(postgres.Open(dsn), &gorm.Config{
+		Logger: logger.Default.LogMode(logger.Silent),
+	})
 
 	if err != nil {
 		log.Fatal("Failed to connect to database")
@@ -77,7 +80,7 @@ func ConnectDatabase() {
 
 	DB.AutoMigrate(
 		&models.User{},
-    	&models.Wallet{},
+		&models.Wallet{},
 		&models.CreditTransaction{},
 		&models.Auction{},
 		&models.Bid{},

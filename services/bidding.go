@@ -16,24 +16,22 @@ const (
 	TxAuctionWin = "AUCTION_WIN"
 )
 
-// PlaceBid handles the entire transactional bidding process
 func PlaceBid(db *gorm.DB, auctionID uint, userID uint, bidAmount int64) (*models.Bid, error) {
 	var placedBid *models.Bid
+	var outbidUserID *uint
+	var extendedEndTime *time.Time // Track this outside the transaction safely
 
 	err := db.Transaction(func(tx *gorm.DB) error {
-		
-		// 1. Lock Auction Row
 		var auction models.Auction
 		if err := tx.Clauses(clause.Locking{Strength: "UPDATE"}).
-			Where("id = ?", auctionID).First(&auction).Error; err != nil {
+			First(&auction, auctionID).Error; err != nil {
 			return fmt.Errorf("auction not found: %w", err)
 		}
 
-		// 2. Validate Auction Status & Timer
 		if auction.Status != "ACTIVE" {
 			return errors.New("auction is closed")
 		}
-		
+
 		now := time.Now()
 		if now.Before(auction.StartTime) || now.After(auction.EndTime) {
 			return errors.New("auction is not currently open for bidding")
@@ -43,7 +41,6 @@ func PlaceBid(db *gorm.DB, auctionID uint, userID uint, bidAmount int64) (*model
 			return errors.New("sellers cannot bid on their own auctions")
 		}
 
-		// 3. Validate Bid Amount
 		var minRequiredBid int64
 		if auction.BidCount == 0 {
 			minRequiredBid = auction.StartingPrice
@@ -55,7 +52,6 @@ func PlaceBid(db *gorm.DB, auctionID uint, userID uint, bidAmount int64) (*model
 			return fmt.Errorf("bid amount too low. minimum required bid is %d", minRequiredBid)
 		}
 
-		// 4. Handle Credit Reservations & Refunds
 		isSelfOutbid := auction.CurrentHighestBidderID != nil && *auction.CurrentHighestBidderID == userID
 
 		if isSelfOutbid && bidAmount <= auction.CurrentHighestBid {
@@ -63,9 +59,8 @@ func PlaceBid(db *gorm.DB, auctionID uint, userID uint, bidAmount int64) (*model
 		}
 
 		if isSelfOutbid {
-			// Reserve only the difference
 			difference := bidAmount - auction.CurrentHighestBid
-			
+
 			if _, err := ReserveCredits(tx, userID, difference); err != nil {
 				return fmt.Errorf("insufficient credits to increase bid: %w", err)
 			}
@@ -80,7 +75,6 @@ func PlaceBid(db *gorm.DB, auctionID uint, userID uint, bidAmount int64) (*model
 			}
 
 		} else {
-			// Reserve full amount for the new bidder
 			if _, err := ReserveCredits(tx, userID, bidAmount); err != nil {
 				return fmt.Errorf("insufficient credits: %w", err)
 			}
@@ -94,10 +88,12 @@ func PlaceBid(db *gorm.DB, auctionID uint, userID uint, bidAmount int64) (*model
 				return fmt.Errorf("failed to record credit transaction: %w", err)
 			}
 
-			// Release Previous Bidder
 			if auction.CurrentHighestBidderID != nil {
 				prevBidderID := *auction.CurrentHighestBidderID
 				prevBidAmount := auction.CurrentHighestBid
+
+				temp := prevBidderID
+				outbidUserID = &temp
 
 				if err := ReleaseCredits(tx, prevBidderID, prevBidAmount); err != nil {
 					return fmt.Errorf("failed to refund previous bidder: %w", err)
@@ -114,26 +110,35 @@ func PlaceBid(db *gorm.DB, auctionID uint, userID uint, bidAmount int64) (*model
 			}
 		}
 
-		// 5. Insert Bid Record
 		bid := models.Bid{
 			AuctionID: auction.ID,
 			UserID:    userID,
 			Amount:    bidAmount,
 		}
+
 		if err := tx.Create(&bid).Error; err != nil {
 			return fmt.Errorf("failed to record bid: %w", err)
 		}
-		
-		placedBid = &bid 
 
-		// 6. Update Auction
+		placedBid = &bid
 		auction.BidCount++
 
-		if err := tx.Model(&auction).Updates(map[string]interface{}{
+		updates := map[string]interface{}{
 			"current_highest_bid":       bidAmount,
 			"current_highest_bidder_id": userID,
 			"bid_count":                 auction.BidCount,
-		}).Error; err != nil {
+		}
+
+		// Anti-sniping extension logic
+		if auction.EndTime.Sub(now) <= 10*time.Second {
+			newEndTime := auction.EndTime.Add(30 * time.Second)
+			updates["end_time"] = newEndTime
+
+			// Capture the new end time for the WebSocket broadcast
+			extendedEndTime = &newEndTime
+		}
+
+		if err := tx.Model(&auction).Updates(updates).Error; err != nil {
 			return fmt.Errorf("failed to update auction state: %w", err)
 		}
 
@@ -144,9 +149,18 @@ func PlaceBid(db *gorm.DB, auctionID uint, userID uint, bidAmount int64) (*model
 		return nil, err
 	}
 
-	// Transaction successfully committed here
+	// --- ALL DB WRITES SUCCESSFUL - FIRE BROADCASTS ---
 
 	BroadcastBidUpdate(auctionID, bidAmount, userID)
+
+	if outbidUserID != nil && *outbidUserID != userID {
+		BroadcastOutbid(auctionID, *outbidUserID, bidAmount)
+	}
+
+	// Trigger the anti-sniping UI update
+	if extendedEndTime != nil {
+		BroadcastAuctionExtended(auctionID, *extendedEndTime)
+	}
 
 	return placedBid, nil
 }

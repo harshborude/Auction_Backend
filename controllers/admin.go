@@ -3,9 +3,11 @@ package controllers
 import (
 	"backend/db"
 	"backend/models"
+	"backend/services"
 	"backend/utils"
 	"log"
 	"net/http"
+	"strconv"
 	"time"
 
 	"github.com/gin-gonic/gin"
@@ -22,14 +24,7 @@ type CreateAuctionInput struct {
 }
 
 func PromoteUser(c *gin.Context) {
-
-	role, exists := c.Get("role")
-	if !exists || role != "ADMIN" {
-		c.JSON(http.StatusForbidden, gin.H{
-			"error": "admin access required",
-		})
-		return
-	}
+	// Redundant role check removed; handled by middleware
 
 	userID := c.Param("user_id")
 
@@ -61,14 +56,7 @@ func PromoteUser(c *gin.Context) {
 }
 
 func GetUsers(c *gin.Context) {
-
-	role, exists := c.Get("role")
-	if !exists || role != "ADMIN" {
-		c.JSON(http.StatusForbidden, gin.H{
-			"error": "admin access required",
-		})
-		return
-	}
+	// Redundant role check removed; handled by middleware
 
 	var users []models.User
 
@@ -85,8 +73,16 @@ func GetUsers(c *gin.Context) {
 }
 
 func AssignCredits(c *gin.Context) {
-
-	userID := c.Param("user_id")
+	// Parse string param to uint safely
+	userIDParam := c.Param("user_id")
+	userIDUint64, err := strconv.ParseUint(userIDParam, 10, 64)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"error": "invalid user id",
+		})
+		return
+	}
+	userID := uint(userIDUint64)
 
 	var input struct {
 		Amount int64 `json:"amount" validate:"required,gt=0"`
@@ -119,6 +115,7 @@ func AssignCredits(c *gin.Context) {
 		return
 	}
 
+	// Used Balance because that matches the models.Wallet schema we designed
 	wallet.Balance += input.Amount
 
 	if err := tx.Save(&wallet).Error; err != nil {
@@ -164,7 +161,6 @@ func AssignCredits(c *gin.Context) {
 }
 
 func CreateAuction(c *gin.Context) {
-
 	adminIDValue, exists := c.Get("user_id")
 	if !exists {
 		c.JSON(http.StatusUnauthorized, gin.H{
@@ -207,13 +203,6 @@ func CreateAuction(c *gin.Context) {
 		return
 	}
 
-	if startTime.Before(time.Now()) {
-		c.JSON(http.StatusBadRequest, gin.H{
-			"error": "start_time cannot be in the past",
-		})
-		return
-	}
-
 	if endTime.Sub(startTime) < time.Minute {
 		c.JSON(http.StatusBadRequest, gin.H{
 			"error": "auction must run for at least 1 minute",
@@ -228,6 +217,13 @@ func CreateAuction(c *gin.Context) {
 		return
 	}
 
+	// Dynamic Status Logic
+	status := "SCHEDULED"
+	// Including a tiny buffer to allow "immediate" starts without failing
+	if startTime.Before(time.Now().Add(5 * time.Second)) {
+		status = "ACTIVE"
+	}
+
 	auction := models.Auction{
 		Title:             input.Title,
 		Description:       input.Description,
@@ -236,7 +232,7 @@ func CreateAuction(c *gin.Context) {
 		BidIncrement:      input.BidIncrement,
 		CurrentHighestBid: input.StartingPrice,
 		BidCount:          0,
-		Status:            "ACTIVE",
+		Status:            status,
 		StartTime:         startTime,
 		EndTime:           endTime,
 		CreatedBy:         adminID,
@@ -252,4 +248,52 @@ func CreateAuction(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusCreated, auction)
+}
+
+// ForceCloseAuction manually ends an auction and settles the credits
+func ForceCloseAuction(c *gin.Context) {
+	auctionIDParam := c.Param("id")
+
+	auctionIDUint64, err := strconv.ParseUint(auctionIDParam, 10, 64)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid auction id"})
+		return
+	}
+
+	auctionID := uint(auctionIDUint64)
+
+	if err := services.FinalizeAuction(db.DB, auctionID); err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"error": err.Error(),
+		})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"message": "auction force-closed successfully",
+	})
+}
+
+// CancelAuction manually cancels an auction and refunds users
+func CancelAuction(c *gin.Context) {
+	auctionIDParam := c.Param("id")
+
+	auctionIDUint64, err := strconv.ParseUint(auctionIDParam, 10, 64)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid auction id"})
+		return
+	}
+
+	auctionID := uint(auctionIDUint64)
+
+	if err := services.CancelAuction(db.DB, auctionID); err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"error": err.Error(),
+		})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"message": "auction cancelled and credits refunded",
+	})
 }

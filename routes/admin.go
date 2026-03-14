@@ -7,7 +7,6 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-
 func AdminRoutes(router *gin.Engine) {
 
 	admin := router.Group("/admin")
@@ -22,5 +21,7 @@ func AdminRoutes(router *gin.Engine) {
 		admin.GET("/users", controllers.GetUsers)
 		admin.PATCH("/users/:user_id/credits", controllers.AssignCredits)
 		admin.POST("/auctions", controllers.CreateAuction)
+		admin.POST("/auctions/:id/end", controllers.ForceCloseAuction)
+		admin.POST("/auctions/:id/cancel", controllers.CancelAuction)
 	}
 }

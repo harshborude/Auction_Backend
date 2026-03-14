@@ -13,13 +13,13 @@ type Auction struct {
 	BidIncrement  int64 `gorm:"not null;check:bid_increment > 0"`
 
 	CurrentHighestBid      int64
-    CurrentHighestBidderID *uint `gorm:"index"`
-	BidCount int64 `gorm:"default:0"`
+	CurrentHighestBidderID *uint `gorm:"index"`
+	BidCount               int64 `gorm:"default:0"`
 
-	Status string `gorm:"type:varchar(20);default:'ACTIVE';index:idx_auction_status_end"`
+	Status string `gorm:"type:varchar(20);default:'ACTIVE';index:idx_status_endtime;index:idx_status_starttime"`
 
-	StartTime time.Time `gorm:"index"`
-	EndTime   time.Time `gorm:"index:idx_auction_status_end"`
+	StartTime time.Time `gorm:"index:idx_status_starttime"`
+	EndTime   time.Time `gorm:"index:idx_status_endtime"`
 
 	CreatedBy uint `gorm:"index"`
 
