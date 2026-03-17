@@ -1,4 +1,4 @@
-import { createContext, useEffect, useState, useContext } from "react";
+import { createContext, useEffect, useRef, useContext } from "react";
 import SocketManager from "../utils/websocket";
 import { AuthContext } from "./AuthContext";
 
@@ -6,39 +6,49 @@ export const SocketContext = createContext();
 
 export const SocketProvider = ({ children }) => {
     const { isAuthenticated } = useContext(AuthContext);
-    const [socket, setSocket] = useState(null);
+
+    const socketRef = useRef(null);
 
     useEffect(() => {
-        let manager = null;
 
-        if (isAuthenticated) {
+        if (isAuthenticated && !socketRef.current) {
             const token = localStorage.getItem("access_token");
-            manager = new SocketManager(token);
-            setSocket(manager);
+
+            socketRef.current = new SocketManager(token);
         }
 
-        // Cleanup: Disconnect when user logs out or unmounts
-        return () => {
-            if (manager) {
-                manager.disconnect();
-            }
-        };
+        // 🔥 Cleanup ONLY on logout
+        if (!isAuthenticated && socketRef.current) {
+            socketRef.current.disconnect();
+            socketRef.current = null;
+        }
+
     }, [isAuthenticated]);
 
     const joinAuction = (auctionId) => {
-        if (socket) {
-            socket.send({ type: "JOIN_AUCTION", auction_id: parseInt(auctionId) });
+        if (socketRef.current) {
+            socketRef.current.send({
+                type: "JOIN_AUCTION",
+                auction_id: parseInt(auctionId)
+            });
         }
     };
 
     const leaveAuction = (auctionId) => {
-        if (socket) {
-            socket.send({ type: "LEAVE_AUCTION", auction_id: parseInt(auctionId) });
+        if (socketRef.current) {
+            socketRef.current.send({
+                type: "LEAVE_AUCTION",
+                auction_id: parseInt(auctionId)
+            });
         }
     };
 
     return (
-        <SocketContext.Provider value={{ socket, joinAuction, leaveAuction }}>
+        <SocketContext.Provider value={{
+            socket: socketRef.current,
+            joinAuction,
+            leaveAuction
+        }}>
             {children}
         </SocketContext.Provider>
     );

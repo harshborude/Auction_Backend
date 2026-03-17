@@ -1,0 +1,46 @@
+.container {
+    padding: 40px;
+    display: flex;
+    gap: 40px;
+}
+
+.left img {
+    width: 400px;
+    height: 300px;
+    object-fit: cover;
+}
+
+.right {
+    max-width: 400px;
+}
+
+.bidBox {
+    margin-top: 20px;
+    display: flex;
+    gap: 10px;
+}
+
+.bidBox input {
+    padding: 10px;
+}
+
+.bidBox button {
+    padding: 10px;
+    background: black;
+    color: white;
+    border: none;
+}
+
+.bids {
+    margin-top: 40px;
+}
+
+.winning {
+    color: green;
+    font-weight: bold;
+}
+
+.error {
+    color: red;
+    margin-top: 10px;
+}

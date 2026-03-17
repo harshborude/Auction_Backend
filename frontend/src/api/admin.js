@@ -1,16 +1,24 @@
-import api from "./api"
+import axios from "./axiosInstance";
 
-export const getUsers = () =>
-    api.get("/admin/users")
+export const fetchUsers = async () => {
+    const res = await axios.get("/admin/users");
+    return res.data;
+};
 
-export const assignCredits = (userId, amount) =>
-    api.patch(`/admin/users/${userId}/credits`, { amount })
+export const assignCredits = async (userId, amount) => {
+    return axios.patch(`/admin/users/${userId}/credits`, {
+        amount
+    });
+};
 
-export const createAuction = (data) =>
-    api.post("/admin/auctions", data)
+export const createAuction = async (data) => {
+    return axios.post("/admin/auctions", data);
+};
 
-export const endAuction = (id) =>
-    api.post(`/admin/auctions/${id}/end`)
+export const endAuction = async (id) => {
+    return axios.post(`/admin/auctions/${id}/end`);
+};
 
-export const cancelAuction = (id) =>
-    api.post(`/admin/auctions/${id}/cancel`)
+export const cancelAuction = async (id) => {
+    return axios.post(`/admin/auctions/${id}/cancel`);
+};

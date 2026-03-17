@@ -1,0 +1,23 @@
+.table {
+    margin-top: 20px;
+}
+
+.header,
+.row {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    padding: 10px;
+    border-bottom: 1px solid #333;
+}
+
+.table {
+    margin-top: 20px;
+}
+
+.header,
+.row {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    padding: 10px;
+    border-bottom: 1px solid #333;
+}

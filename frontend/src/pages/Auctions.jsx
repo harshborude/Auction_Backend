@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react"
 import { fetchAuctions } from "../api/auctions"
 import AuctionCard from "../components/AuctionCard"
+import { mapAuction } from "../utils/mapper"
 import styles from "./Auctions.module.css"
 
 function Auctions() {
@@ -16,7 +17,9 @@ function Auctions() {
 
                 const data = await fetchAuctions()
 
-                setAuctions(data.auctions)
+                const mapped = data.map(mapAuction)
+
+                setAuctions(mapped)
 
             } catch (err) {
 

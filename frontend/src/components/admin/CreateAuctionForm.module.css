@@ -1,0 +1,18 @@
+.form {
+    margin-top: 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    max-width: 400px;
+}
+
+.form input {
+    padding: 8px;
+}
+
+.form button {
+    padding: 10px;
+    background: #3498db;
+    border: none;
+    cursor: pointer;
+}

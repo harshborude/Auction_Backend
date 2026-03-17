@@ -12,15 +12,21 @@ function AuctionCard({ auction }) {
                 className={styles.image}
             />
 
-            <h3>{auction.title}</h3>
+            <div className={styles.info}>
 
-            <p>Current Bid: ${auction.current_highest_bid}</p>
+                <h3>{auction.title}</h3>
 
-            <p>Bids: {auction.bid_count}</p>
+                <p>
+                    Current Bid: <strong>${auction.current_highest_bid}</strong>
+                </p>
 
-            <Link to={`/auctions/${auction.id}`} className={styles.button}>
-                View Auction
-            </Link>
+                <p>Bids: {auction.bid_count}</p>
+
+                <Link to={`/auctions/${auction.id}`} className={styles.button}>
+                    View Auction
+                </Link>
+
+            </div>
 
         </div>
     )

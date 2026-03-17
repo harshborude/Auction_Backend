@@ -7,6 +7,7 @@ import (
 	"backend/utils"
 	"log"
 
+	// "github.com/gin-contrib/cors"
 	"github.com/joho/godotenv"
 )
 
@@ -30,6 +31,15 @@ func main() {
 	log.Println("WebSocket hub started")
 
 	router := routes.SetupRouter()
+
+	// router.Use(cors.New(cors.Config{
+	// 	AllowOrigins:     []string{"http://localhost:5173"},
+	// 	AllowMethods:     []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
+	// 	AllowHeaders:     []string{"Content-Type", "Authorization"},
+	// 	ExposeHeaders:    []string{"Content-Length"},
+	// 	AllowCredentials: true,
+	// 	MaxAge:           12,
+	// }))
 
 	log.Println("Server running on port 8080")
 
