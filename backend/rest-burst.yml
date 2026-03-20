@@ -1,0 +1,22 @@
+config:
+  target: "http://localhost:8080"
+  phases:
+    - duration: 30
+      arrivalRate: 10
+      name: "Warm-up Phase"
+    - duration: 30
+      arrivalRate: 200
+      name: "Flash Burst - REST API"
+scenarios:
+  - name: "Simulate REST API bidding war"
+    flow:
+      - loop:
+          - post:
+              url: "/auctions/1/bid"
+              headers:
+                # Passing the same JWT token we used for the WebSocket test
+                Authorization: "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJVc2VySUQiOjIsIlJvbGUiOiJVU0VSIiwiZXhwIjoxNzc0MDE1NTExfQ.doTIseLgZxgn98b_ZrlKdxcCDq0fTFQPo6eFutE2HRA"
+              json:
+                amount: 500
+          - think: 0.2
+        count: 10

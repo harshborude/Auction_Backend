@@ -1,0 +1,35 @@
+config:
+  target: "ws://localhost:8080"
+  engines:
+    ws: {}
+  phases:
+    - duration: 30
+      arrivalRate: 10
+      name: "Warm-up Phase"
+    - duration: 30
+      arrivalRate: 200
+      name: "Flash Burst - Final 30 Seconds"
+scenarios:
+  - name: "Simulate last-second bidding war"
+    engine: ws
+    flow:
+      # Fix: The token is passed as a query parameter (safest for WebSocket engines)
+      - connect: "ws://localhost:8080/ws?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJVc2VySUQiOjIsIlJvbGUiOiJVU0VSIiwiZXhwIjoxNzczODQzNTkyfQ.VSfsKvnZOIiVb_H7xZOAQWBfzDrLrH-3qNT8v7r_b5s"
+      
+      - think: 1
+      
+      - send:
+          json:
+            type: "JOIN_AUCTION" 
+            auction_id: 1
+            
+      - think: 5 
+      
+      - loop:
+          - send:
+              json:
+                type: "BID" 
+                auction_id: 1
+                amount: 500
+          - think: 0.2
+        count: 10
