@@ -1,0 +1,46 @@
+.title {
+  font-size: 22px;
+  font-weight: 700;
+  margin-bottom: 24px;
+}
+
+.tabs {
+  display: flex;
+  gap: 0;
+  border-bottom: 1px solid var(--border);
+  margin-bottom: 28px;
+}
+
+.tab {
+  background: none;
+  border: none;
+  border-bottom: 2px solid transparent;
+  color: var(--text-muted);
+  font-size: 14px;
+  font-weight: 500;
+  padding: 10px 20px;
+  margin-bottom: -1px;
+  transition: color var(--transition), border-color var(--transition);
+}
+
+.tab:hover {
+  color: var(--text);
+}
+
+.tab.active {
+  color: var(--text);
+  border-bottom-color: var(--accent);
+}
+
+.panel {
+  /* content area */
+}
+
+.sectionLabel {
+  font-size: 13px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--text-muted);
+  margin-bottom: 16px;
+}

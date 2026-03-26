@@ -15,6 +15,7 @@ type Auction struct {
 	CurrentHighestBid      int64
 	CurrentHighestBidderID *uint `gorm:"index"`
 	BidCount               int64 `gorm:"default:0"`
+	ExtensionCount         int   `gorm:"default:0"`
 
 	Status string `gorm:"type:varchar(20);default:'ACTIVE';index:idx_status_endtime;index:idx_status_starttime"`
 

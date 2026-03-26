@@ -1,0 +1,14 @@
+.pagination {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  margin-top: 40px;
+}
+
+.page {
+  font-size: 14px;
+  color: var(--text-muted);
+  min-width: 60px;
+  text-align: center;
+}

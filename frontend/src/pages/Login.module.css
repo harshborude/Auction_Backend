@@ -1,33 +1,44 @@
-.container {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    margin-top: 100px;
+.page {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 40px 24px;
+}
+
+.card {
+  width: 100%;
+  max-width: 380px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 36px 32px;
+}
+
+.title {
+  font-size: 22px;
+  font-weight: 700;
+  margin-bottom: 28px;
 }
 
 .form {
-    display: flex;
-    flex-direction: column;
-    width: 300px;
-    gap: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
 }
 
-.form input {
-    padding: 10px;
-    font-size: 14px;
-    border: 1px solid #ccc;
-    border-radius: 4px;
+.footer {
+  margin-top: 24px;
+  text-align: center;
+  font-size: 14px;
+  color: var(--text-muted);
 }
 
-.form button {
-    padding: 10px;
-    background: black;
-    color: white;
-    border: none;
-    cursor: pointer;
-    border-radius: 4px;
+.link {
+  color: var(--accent);
+  transition: opacity var(--transition);
 }
 
-.form button:hover {
-    background: #333;
+.link:hover {
+  opacity: 0.8;
 }

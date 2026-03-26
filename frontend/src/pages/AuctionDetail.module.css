@@ -1,46 +1,245 @@
-.container {
-    padding: 40px;
-    display: flex;
-    gap: 40px;
+.back {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 14px;
+  color: var(--text-muted);
+  margin-bottom: 28px;
+  transition: color var(--transition);
 }
 
-.left img {
-    width: 400px;
-    height: 300px;
-    object-fit: cover;
+.back:hover {
+  color: var(--text);
 }
 
-.right {
-    max-width: 400px;
+.layout {
+  display: grid;
+  grid-template-columns: 1fr 380px;
+  gap: 40px;
+  align-items: start;
 }
 
-.bidBox {
-    margin-top: 20px;
-    display: flex;
-    gap: 10px;
+@media (max-width: 800px) {
+  .layout {
+    grid-template-columns: 1fr;
+  }
 }
 
-.bidBox input {
-    padding: 10px;
+/* Left column */
+.image {
+  width: 100%;
+  aspect-ratio: 16/9;
+  object-fit: cover;
+  border-radius: var(--radius);
+  background: var(--surface-2);
+  display: block;
 }
 
-.bidBox button {
-    padding: 10px;
-    background: black;
-    color: white;
-    border: none;
+.imagePlaceholder {
+  width: 100%;
+  aspect-ratio: 16/9;
+  background: var(--surface-2);
+  border-radius: var(--radius);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-dim);
+  font-size: 14px;
 }
 
-.bids {
-    margin-top: 40px;
+.titleRow {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-top: 20px;
 }
 
-.winning {
-    color: green;
-    font-weight: bold;
+.title {
+  font-size: 24px;
+  font-weight: 700;
+  flex: 1;
 }
 
-.error {
-    color: red;
-    margin-top: 10px;
+.description {
+  margin-top: 12px;
+  font-size: 15px;
+  color: var(--text-muted);
+  line-height: 1.7;
+}
+
+.divider {
+  border: none;
+  border-top: 1px solid var(--border);
+  margin: 28px 0;
+}
+
+/* Bid history */
+.bidsTitle {
+  font-size: 14px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--text-muted);
+  margin-bottom: 16px;
+}
+
+.bidList {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+}
+
+.bidRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 0;
+  border-bottom: 1px solid var(--border);
+  font-size: 14px;
+}
+
+.bidUser {
+  font-weight: 500;
+}
+
+.bidUser.isYou {
+  color: var(--accent);
+}
+
+.bidAmount {
+  font-weight: 600;
+}
+
+.bidTime {
+  font-size: 12px;
+  color: var(--text-muted);
+  min-width: 70px;
+  text-align: right;
+}
+
+.noBids {
+  color: var(--text-muted);
+  font-size: 14px;
+  padding: 20px 0;
+}
+
+/* Right column (bid panel) */
+.panel {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 24px;
+  position: sticky;
+  top: 76px;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.currentBidLabel {
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--text-muted);
+  margin-bottom: 4px;
+}
+
+.currentBidAmount {
+  font-size: 36px;
+  font-weight: 800;
+  color: var(--accent);
+  line-height: 1;
+}
+
+.panelRow {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  font-size: 14px;
+}
+
+.panelLabel {
+  font-size: 12px;
+  color: var(--text-muted);
+  margin-bottom: 2px;
+}
+
+.panelValue {
+  font-weight: 600;
+}
+
+.countdown {
+  font-size: 20px;
+  font-weight: 700;
+}
+
+.countdown[data-state='critical'] {
+  color: var(--red);
+}
+
+.countdown[data-state='warning'] {
+  color: var(--accent);
+}
+
+.panelDivider {
+  border: none;
+  border-top: 1px solid var(--border);
+}
+
+.walletInfo {
+  font-size: 13px;
+  color: var(--text-muted);
+}
+
+.walletBalance {
+  color: var(--text);
+  font-weight: 600;
+}
+
+.bidInput {
+  display: flex;
+  gap: 8px;
+}
+
+.bidInput input {
+  flex: 1;
+}
+
+.bidInput button {
+  white-space: nowrap;
+}
+
+/* Status banners */
+.banner {
+  padding: 12px 14px;
+  border-radius: var(--radius-sm);
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.bannerWinning {
+  background: var(--green-dim);
+  color: var(--green);
+}
+
+.bannerOutbid {
+  background: var(--red-dim);
+  color: var(--red);
+}
+
+.bannerEnded {
+  background: var(--surface-2);
+  color: var(--text-muted);
+}
+
+.bannerExtended {
+  background: var(--accent-dim);
+  color: var(--accent);
+  font-size: 13px;
+  padding: 8px 12px;
+}
+
+.increment {
+  font-size: 13px;
+  color: var(--text-muted);
 }

@@ -1,23 +1,69 @@
 .table {
-    margin-top: 20px;
+  width: 100%;
+  border-collapse: collapse;
 }
 
-.header,
-.row {
-    display: grid;
-    grid-template-columns: repeat(5, 1fr);
-    padding: 10px;
-    border-bottom: 1px solid #333;
+.thead th {
+  text-align: left;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  padding: 10px 12px;
+  border-bottom: 1px solid var(--border);
 }
 
-.table {
-    margin-top: 20px;
+.tbody tr {
+  border-bottom: 1px solid var(--border);
+  transition: background var(--transition);
 }
 
-.header,
-.row {
-    display: grid;
-    grid-template-columns: repeat(5, 1fr);
-    padding: 10px;
-    border-bottom: 1px solid #333;
+.tbody tr:hover {
+  background: var(--surface-2);
+}
+
+.tbody td {
+  padding: 12px;
+  font-size: 14px;
+  vertical-align: middle;
+}
+
+.role {
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  padding: 3px 7px;
+  border-radius: 4px;
+  text-transform: uppercase;
+}
+
+.roleAdmin {
+  background: var(--accent-dim);
+  color: var(--accent);
+}
+
+.roleUser {
+  background: var(--surface-3);
+  color: var(--text-muted);
+}
+
+.assignRow {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.assignRow input {
+  width: 80px;
+}
+
+.statusActive {
+  color: var(--green);
+  font-size: 12px;
+}
+
+.statusBanned {
+  color: var(--red);
+  font-size: 12px;
 }

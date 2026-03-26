@@ -1,18 +1,41 @@
 .form {
-    margin-top: 20px;
-    display: flex;
-    flex-direction: column;
-    gap: 10px;
-    max-width: 400px;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+  max-width: 640px;
 }
 
-.form input {
-    padding: 8px;
+.full {
+  grid-column: 1 / -1;
 }
 
-.form button {
-    padding: 10px;
-    background: #3498db;
-    border: none;
-    cursor: pointer;
+.error {
+  grid-column: 1 / -1;
+}
+
+.submit {
+  grid-column: 1 / -1;
+}
+
+.success {
+  grid-column: 1 / -1;
+}
+
+.uploadArea {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.uploadStatus {
+  font-size: 13px;
+  color: var(--text-muted);
+}
+
+.preview {
+  width: 160px;
+  height: 120px;
+  object-fit: cover;
+  border-radius: var(--radius);
+  border: 1px solid var(--border);
 }

@@ -14,7 +14,7 @@ func SetupRouter() *gin.Engine {
 
 	router.Use(cors.New(cors.Config{
 		AllowOrigins:     []string{"http://localhost:5173"},
-		AllowMethods:     []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
+		AllowMethods:     []string{"GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"},
 		AllowHeaders:     []string{"Content-Type", "Authorization"},
 		ExposeHeaders:    []string{"Content-Length"},
 		AllowCredentials: true,
@@ -26,6 +26,12 @@ func SetupRouter() *gin.Engine {
 			"status": "server running",
 		})
 	})
+
+	// Static file serving for local dev uploads
+	router.Static("/uploads", "./uploads")
+
+	// Image upload (local dev fallback — production uses Cloudinary)
+	router.POST("/upload", middleware.AuthMiddleware(), controllers.UploadImage)
 
 	// WebSocket route
 	router.GET("/ws", middleware.AuthMiddleware(), controllers.ServeWS)

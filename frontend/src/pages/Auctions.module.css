@@ -1,10 +1,46 @@
-.container {
-    padding: 40px;
+.header {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  margin-bottom: 28px;
+}
+
+.title {
+  font-size: 22px;
+  font-weight: 700;
+}
+
+.count {
+  font-size: 14px;
+  color: var(--text-muted);
 }
 
 .grid {
-    margin-top: 20px;
-    display: flex;
-    flex-wrap: wrap;
-    gap: 25px;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 20px;
+}
+
+.skeletonGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 20px;
+}
+
+.skeletonCard {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  overflow: hidden;
+}
+
+.empty {
+  text-align: center;
+  padding: 80px 0;
+  color: var(--text-muted);
+}
+
+.emptyIcon {
+  font-size: 40px;
+  margin-bottom: 12px;
 }

@@ -1,18 +1,112 @@
-.container {
-    padding: 20px;
+.title {
+  font-size: 22px;
+  font-weight: 700;
+  margin-bottom: 28px;
 }
 
-.balanceBox {
-    margin-bottom: 20px;
-    padding: 15px;
-    border: 1px solid #ccc;
+.balanceGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 16px;
+  margin-bottom: 40px;
 }
 
-.transactions {
-    margin-top: 20px;
+.balanceCard {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 20px;
 }
 
-.transactionItem {
-    border-bottom: 1px solid #eee;
-    padding: 10px 0;
+.balanceLabel {
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--text-muted);
+  margin-bottom: 8px;
+}
+
+.balanceAmount {
+  font-size: 28px;
+  font-weight: 800;
+}
+
+.balanceAmount.available {
+  color: var(--accent);
+}
+
+.balanceAmount.reserved {
+  color: var(--text-muted);
+}
+
+.sectionTitle {
+  font-size: 14px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--text-muted);
+  margin-bottom: 16px;
+}
+
+.txList {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+}
+
+.txRow {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 12px 0;
+  border-bottom: 1px solid var(--border);
+  font-size: 14px;
+}
+
+.txDot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.txInfo {
+  flex: 1;
+}
+
+.txType {
+  font-weight: 500;
+  margin-bottom: 2px;
+}
+
+.txRef {
+  font-size: 12px;
+  color: var(--text-muted);
+}
+
+.txAmount {
+  font-weight: 600;
+  font-size: 15px;
+  flex-shrink: 0;
+}
+
+.txTime {
+  font-size: 12px;
+  color: var(--text-muted);
+  min-width: 90px;
+  text-align: right;
+}
+
+.txPositive { color: var(--green); }
+.txNegative { color: var(--red); }
+.txNeutral  { color: var(--text-muted); }
+.dotGreen   { background: var(--green); }
+.dotRed     { background: var(--red); }
+.dotAmber   { background: var(--accent); }
+.dotBlue    { background: var(--blue); }
+
+.empty {
+  color: var(--text-muted);
+  font-size: 14px;
+  padding: 24px 0;
 }

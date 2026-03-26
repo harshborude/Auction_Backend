@@ -14,12 +14,16 @@ const (
 	TxBidReserve = "BID_RESERVE"
 	TxBidRelease = "BID_RELEASE"
 	TxAuctionWin = "AUCTION_WIN"
+
+	antiSnipeWindow      = 30 * time.Second
+	antiSnipeExtension   = 30 * time.Second
+	maxAntiSnipeExtensions = 10
 )
 
 func PlaceBid(db *gorm.DB, auctionID uint, userID uint, bidAmount int64) (*models.Bid, error) {
 	var placedBid *models.Bid
 	var outbidUserID *uint
-	var extendedEndTime *time.Time // Track this outside the transaction safely
+	var extendedEndTime *time.Time 
 
 	err := db.Transaction(func(tx *gorm.DB) error {
 		var auction models.Auction
@@ -129,12 +133,12 @@ func PlaceBid(db *gorm.DB, auctionID uint, userID uint, bidAmount int64) (*model
 			"bid_count":                 auction.BidCount,
 		}
 
-		// Anti-sniping extension logic
-		if auction.EndTime.Sub(now) <= 10*time.Second {
-			newEndTime := auction.EndTime.Add(30 * time.Second)
+		// Anti-sniping extension logic: extend only if within the window and under the cap
+		if auction.EndTime.Sub(now) <= antiSnipeWindow && auction.ExtensionCount < maxAntiSnipeExtensions {
+			newEndTime := auction.EndTime.Add(antiSnipeExtension)
 			updates["end_time"] = newEndTime
+			updates["extension_count"] = auction.ExtensionCount + 1
 
-			// Capture the new end time for the WebSocket broadcast
 			extendedEndTime = &newEndTime
 		}
 

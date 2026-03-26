@@ -1,34 +1,35 @@
 .table {
-    margin-top: 20px;
-    border: 1px solid #333;
+  width: 100%;
+  border-collapse: collapse;
 }
 
-.header,
-.row {
-    display: grid;
-    grid-template-columns: repeat(5, 1fr);
-    padding: 10px;
-    border-bottom: 1px solid #333;
-    align-items: center;
+.thead th {
+  text-align: left;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  padding: 10px 12px;
+  border-bottom: 1px solid var(--border);
 }
 
-.header {
-    font-weight: bold;
-    background: #111;
+.tbody tr {
+  border-bottom: 1px solid var(--border);
+  transition: background var(--transition);
 }
 
-.row button {
-    margin-right: 5px;
-    padding: 5px 10px;
-    cursor: pointer;
+.tbody tr:hover {
+  background: var(--surface-2);
 }
 
-.row button:first-child {
-    background: #2ecc71;
-    border: none;
+.tbody td {
+  padding: 12px;
+  font-size: 14px;
+  vertical-align: middle;
 }
 
-.row button:last-child {
-    background: #e74c3c;
-    border: none;
+.actions {
+  display: flex;
+  gap: 6px;
 }

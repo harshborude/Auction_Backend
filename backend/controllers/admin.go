@@ -60,7 +60,7 @@ func GetUsers(c *gin.Context) {
 
 	var users []models.User
 
-	if err := db.DB.Find(&users).Error; err != nil {
+	if err := db.DB.Preload("Wallet").Find(&users).Error; err != nil {
 		log.Printf("error occurred during fetching users: %v", err)
 
 		c.JSON(http.StatusInternalServerError, gin.H{
@@ -250,6 +250,34 @@ func CreateAuction(c *gin.Context) {
 	c.JSON(http.StatusCreated, auction)
 }
 
+// GetAdminAuctions returns all auctions regardless of status (admin only)
+func GetAdminAuctions(c *gin.Context) {
+	var auctions []models.Auction
+	if err := db.DB.Order("created_at DESC").Find(&auctions).Error; err != nil {
+		log.Printf("error fetching admin auctions: %v", err)
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to fetch auctions"})
+		return
+	}
+	c.JSON(http.StatusOK, gin.H{"auctions": auctions})
+}
+
+// BanUser sets a user's IsActive to false, preventing login
+func BanUser(c *gin.Context) {
+	userIDParam := c.Param("user_id")
+	var user models.User
+	if err := db.DB.First(&user, userIDParam).Error; err != nil {
+		c.JSON(http.StatusNotFound, gin.H{"error": "user not found"})
+		return
+	}
+	user.IsActive = false
+	if err := db.DB.Save(&user).Error; err != nil {
+		log.Printf("error banning user: %v", err)
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to ban user"})
+		return
+	}
+	c.JSON(http.StatusOK, gin.H{"message": "user banned successfully"})
+}
+
 // ForceCloseAuction manually ends an auction and settles the credits
 func ForceCloseAuction(c *gin.Context) {
 	auctionIDParam := c.Param("id")
@@ -262,7 +290,7 @@ func ForceCloseAuction(c *gin.Context) {
 
 	auctionID := uint(auctionIDUint64)
 
-	if err := services.FinalizeAuction(db.DB, auctionID); err != nil {
+	if err := services.AdminForceCloseAuction(db.DB, auctionID); err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"error": err.Error(),
 		})
