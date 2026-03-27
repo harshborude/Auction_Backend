@@ -3,6 +3,7 @@ package cache
 import (
 	"context"
 	"crypto/rand"
+	"crypto/tls"
 	"encoding/hex"
 	"fmt"
 	"log"
@@ -28,22 +29,19 @@ end
 func Connect() {
 	var opts *redis.Options
 
-	if url := os.Getenv("REDIS_URL"); url != "" {
-		var err error
-		opts, err = redis.ParseURL(url)
-		if err != nil {
-			log.Fatalf("Invalid REDIS_URL: %v", err)
-		}
-	} else {
-		addr := os.Getenv("REDIS_ADDR")
-		if addr == "" {
-			addr = "localhost:6379"
-		}
-		opts = &redis.Options{
-			Addr:     addr,
-			Password: os.Getenv("REDIS_PASSWORD"),
-			DB:       0,
-		}
+	addr := os.Getenv("REDIS_ADDR")
+	if addr == "" {
+		addr = "localhost:6379"
+	}
+
+	opts = &redis.Options{
+		Addr:     addr,
+		Password: os.Getenv("REDIS_PASSWORD"),
+		DB:       0,
+	}
+
+	if os.Getenv("REDIS_TLS") == "true" {
+		opts.TLSConfig = &tls.Config{}
 	}
 
 	RDB = redis.NewClient(opts)
