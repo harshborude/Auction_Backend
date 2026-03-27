@@ -1,6 +1,7 @@
 package services
 
 import (
+	"backend/cache"
 	"backend/models"
 	"fmt"
 
@@ -61,6 +62,7 @@ func AdminForceCloseAuction(db *gorm.DB, auctionID uint) error {
 	}
 
 	if wasActive {
+		cache.DeleteAuctionState(auctionID)
 		BroadcastAuctionEnd(auctionID, winnerID, finalPrice)
 	}
 
@@ -123,8 +125,8 @@ func CancelAuction(db *gorm.DB, auctionID uint) error {
 		return err
 	}
 
-	// Broadcast event AFTER commit
 	if wasCancelled {
+		cache.DeleteAuctionState(auctionID)
 		BroadcastAuctionEnd(auctionID, refundedUserID, 0)
 	}
 

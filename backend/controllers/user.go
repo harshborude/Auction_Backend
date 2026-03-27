@@ -430,18 +430,35 @@ userID := uint(userID64)
 	// generate new access token
 	accessToken, err := utils.GenerateAccessToken(user.ID, user.Role)
 	if err != nil {
-
 		log.Printf("error occurred during access token generation: %v", err)
-
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"error": "error occurred during token generation",
 		})
+		return
+	}
 
+	// rotate refresh token — invalidate the old one immediately
+	newRefreshToken, err := utils.GenerateRefreshToken(user.ID)
+	if err != nil {
+		log.Printf("error occurred during refresh token rotation: %v", err)
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"error": "error occurred during token generation",
+		})
+		return
+	}
+
+	user.RefreshToken = newRefreshToken
+	if err := db.DB.Save(&user).Error; err != nil {
+		log.Printf("error occurred during refresh token storage: %v", err)
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"error": "error occurred during token rotation",
+		})
 		return
 	}
 
 	c.JSON(http.StatusOK, gin.H{
-		"access_token": accessToken,
+		"access_token":  accessToken,
+		"refresh_token": newRefreshToken,
 	})
 }
 

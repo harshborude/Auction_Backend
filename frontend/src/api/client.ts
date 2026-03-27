@@ -49,13 +49,19 @@ client.interceptors.response.use(
       const { data } = await axios.post(`${BASE_URL}/users/refresh`, {
         refresh_token: refreshToken,
       })
-      const newToken: string = data.access_token
-      localStorage.setItem('access_token', newToken)
-      original.headers.Authorization = `Bearer ${newToken}`
-      queue.forEach((cb) => cb(newToken))
+      const newAccessToken: string = data.access_token
+      localStorage.setItem('access_token', newAccessToken)
+      // Store the rotated refresh token returned by the server
+      if (data.refresh_token) {
+        localStorage.setItem('refresh_token', data.refresh_token)
+      }
+      original.headers.Authorization = `Bearer ${newAccessToken}`
+      queue.forEach((cb) => cb(newAccessToken))
       queue = []
       return client(original)
     } catch {
+      queue.forEach((cb) => cb(''))
+      queue = []
       clearSession()
       return Promise.reject(error)
     } finally {

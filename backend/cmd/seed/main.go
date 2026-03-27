@@ -716,7 +716,9 @@ func createAuctions(db *gorm.DB, rng *rand.Rand, users []models.User) {
 			switch bucket.status {
 			case "ACTIVE":
 				startTime = now.Add(-time.Duration(rng.Intn(48)+1) * time.Hour)
-				endTime = now.Add(time.Duration(rng.Intn(71)+1) * time.Hour)
+				// Minimum 4 hours in the future so freshly seeded auctions don't
+				// immediately expire and trigger the worker before you can browse them.
+				endTime = now.Add(time.Duration(rng.Intn(68)+4) * time.Hour)
 			case "ENDED":
 				startTime = now.Add(-time.Duration(rng.Intn(240)+72) * time.Hour)
 				endTime = now.Add(-time.Duration(rng.Intn(60)+2) * time.Hour)
@@ -834,11 +836,28 @@ func simulateBids(db *gorm.DB, rng *rand.Rand, auction *models.Auction, users []
 		"bid_count":                 auction.BidCount,
 	})
 
-	// For ENDED auctions: deduct the winning bid from winner's wallet
-	if auction.Status == "ENDED" && auction.CurrentHighestBidderID != nil {
+	if auction.CurrentHighestBidderID == nil {
+		return
+	}
+
+	switch auction.Status {
+	case "ACTIVE":
+		// The highest bidder's credits are reserved (locked) until the auction ends.
+		// Without this the worker's DeductReservedCredits fails when the auction expires
+		// because it requires ReservedBalance >= winning_bid.
 		db.Model(&models.Wallet{}).
 			Where("user_id = ?", *auction.CurrentHighestBidderID).
-			UpdateColumn("balance", gorm.Expr("balance - ?", auction.CurrentHighestBid))
+			UpdateColumn("reserved_balance", gorm.Expr("reserved_balance + ?", auction.CurrentHighestBid))
+
+	case "ENDED":
+		// Auction is already settled: deduct from both Balance and ReservedBalance
+		// to match what DeductReservedCredits does in production.
+		db.Model(&models.Wallet{}).
+			Where("user_id = ?", *auction.CurrentHighestBidderID).
+			Updates(map[string]interface{}{
+				"balance":          gorm.Expr("balance - ?", auction.CurrentHighestBid),
+				"reserved_balance": gorm.Expr("reserved_balance - LEAST(reserved_balance, ?)", auction.CurrentHighestBid),
+			})
 	}
 }
 

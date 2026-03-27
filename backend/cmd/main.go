@@ -1,6 +1,7 @@
 package main
 
 import (
+	"backend/cache"
 	"backend/db"
 	"backend/routes"
 	"backend/services"
@@ -22,6 +23,9 @@ func main() {
 
 	db.ConnectDatabase()
 	log.Println("Database connected")
+
+	cache.Connect()
+	log.Println("Redis connected")
 
 	go services.StartAuctionWorker()
 	log.Println("Auction worker started")

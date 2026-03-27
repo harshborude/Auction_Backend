@@ -1,6 +1,7 @@
 package services
 
 import (
+	"backend/cache"
 	"backend/db"
 	"backend/models"
 	"fmt"
@@ -137,8 +138,9 @@ func FinalizeAuction(db *gorm.DB, auctionID uint) error {
 		return err
 	}
 
-	// Broadcast only if we actually closed it
 	if wasActive {
+		// Remove from cache so no further bids can be validated against stale state
+		cache.DeleteAuctionState(auctionID)
 		BroadcastAuctionEnd(auctionID, winnerID, finalPrice)
 	}
 
@@ -178,6 +180,8 @@ func ActivateAuction(db *gorm.DB, auctionID uint) error {
 	}
 
 	if wasScheduled {
+		// Update status in cache so bids can immediately be validated
+		cache.UpdateAuctionStatus(auctionID, "ACTIVE")
 		BroadcastAuctionStart(auctionID)
 	}
 

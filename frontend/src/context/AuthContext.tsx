@@ -61,9 +61,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, [])
 
   const logout = useCallback(async () => {
-    const refreshToken = localStorage.getItem('refresh_token') ?? ''
     try {
-      await logoutUser(refreshToken)
+      await logoutUser()
     } catch {
       // proceed regardless
     }

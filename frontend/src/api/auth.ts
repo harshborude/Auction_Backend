@@ -9,8 +9,8 @@ export function loginUser(data: { email: string; password: string }) {
   return client.post<{ access_token: string; refresh_token: string }>('/users/login', data)
 }
 
-export function logoutUser(refreshToken: string) {
-  return client.post('/users/logout', { refresh_token: refreshToken })
+export function logoutUser() {
+  return client.post('/users/logout')
 }
 
 export function refreshToken(refreshToken: string) {
