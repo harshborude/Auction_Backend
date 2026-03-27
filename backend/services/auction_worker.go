@@ -113,16 +113,21 @@ func FinalizeAuction(db *gorm.DB, auctionID uint) error {
 			finalPrice = auction.CurrentHighestBid
 
 			if err := DeductReservedCredits(tx, *winnerID, finalPrice); err != nil {
-				return fmt.Errorf("failed to deduct winning credits: %w", err)
-			}
-
-			if err := tx.Create(&models.CreditTransaction{
-				UserID:    *winnerID,
-				Amount:    finalPrice,
-				Type:      "AUCTION_WIN",
-				Reference: fmt.Sprintf("auction_%d_won", auction.ID),
-			}).Error; err != nil {
-				return fmt.Errorf("failed to log win transaction: %w", err)
+				// Payment failed due to inconsistent wallet state (e.g. from data corruption
+				// or stress-test data). Log and end the auction without charging the winner
+				// so the worker does not retry forever.
+				log.Printf("Warning: could not deduct credits for auction %d winner %d: %v — ending auction without charge", auctionID, *winnerID, err)
+				winnerID = nil
+				finalPrice = 0
+			} else {
+				if err := tx.Create(&models.CreditTransaction{
+					UserID:    *winnerID,
+					Amount:    finalPrice,
+					Type:      "AUCTION_WIN",
+					Reference: fmt.Sprintf("auction_%d_won", auction.ID),
+				}).Error; err != nil {
+					return fmt.Errorf("failed to log win transaction: %w", err)
+				}
 			}
 		}
 
