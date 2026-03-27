@@ -26,16 +26,27 @@ end
 `)
 
 func Connect() {
-	addr := os.Getenv("REDIS_ADDR")
-	if addr == "" {
-		addr = "localhost:6379"
+	var opts *redis.Options
+
+	if url := os.Getenv("REDIS_URL"); url != "" {
+		var err error
+		opts, err = redis.ParseURL(url)
+		if err != nil {
+			log.Fatalf("Invalid REDIS_URL: %v", err)
+		}
+	} else {
+		addr := os.Getenv("REDIS_ADDR")
+		if addr == "" {
+			addr = "localhost:6379"
+		}
+		opts = &redis.Options{
+			Addr:     addr,
+			Password: os.Getenv("REDIS_PASSWORD"),
+			DB:       0,
+		}
 	}
 
-	RDB = redis.NewClient(&redis.Options{
-		Addr:     addr,
-		Password: os.Getenv("REDIS_PASSWORD"),
-		DB:       0,
-	})
+	RDB = redis.NewClient(opts)
 
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
