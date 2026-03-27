@@ -3,6 +3,8 @@ package routes
 import (
 	"backend/controllers"
 	"backend/middleware"
+	"os"
+	"strings"
 
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
@@ -12,8 +14,13 @@ func SetupRouter() *gin.Engine {
 
 	router := gin.Default()
 
+	allowedOrigins := []string{"http://localhost:5173"}
+	if raw := os.Getenv("ALLOWED_ORIGINS"); raw != "" {
+		allowedOrigins = strings.Split(raw, ",")
+	}
+
 	router.Use(cors.New(cors.Config{
-		AllowOrigins:     []string{"http://localhost:5173"},
+		AllowOrigins:     allowedOrigins,
 		AllowMethods:     []string{"GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"},
 		AllowHeaders:     []string{"Content-Type", "Authorization"},
 		ExposeHeaders:    []string{"Content-Length"},

@@ -7,6 +7,7 @@ import (
 	"backend/services"
 	"backend/utils"
 	"log"
+	"os"
 
 	// "github.com/gin-contrib/cors"
 	"github.com/joho/godotenv"
@@ -45,9 +46,14 @@ func main() {
 	// 	MaxAge:           12,
 	// }))
 
-	log.Println("Server running on port 8080")
+	port := os.Getenv("PORT")
+	if port == "" {
+		port = "8080"
+	}
 
-	if err := router.Run(":8080"); err != nil {
+	log.Printf("Server running on port %s\n", port)
+
+	if err := router.Run(":" + port); err != nil {
 		log.Fatal("server failed:", err)
 	}
 }

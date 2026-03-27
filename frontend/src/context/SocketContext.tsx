@@ -22,7 +22,9 @@ export function SocketProvider({ children }: { children: React.ReactNode }) {
     const token = localStorage.getItem('access_token')
     if (!token) return
 
-    const ws = new WebSocket(`ws://localhost:8080/ws?token=${token}`)
+    const apiUrl = import.meta.env.VITE_API_URL ?? 'http://localhost:8080'
+    const wsUrl = apiUrl.replace(/^http/, 'ws')
+    const ws = new WebSocket(`${wsUrl}/ws?token=${token}`)
     wsRef.current = ws
 
     ws.onopen = () => {
